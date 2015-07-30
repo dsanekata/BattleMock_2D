@@ -22,21 +22,32 @@ public class BaseController : MonoBehaviour
 	[SerializeField]
 	protected float attackDamage = 0;
 	[SerializeField]
-	protected bool isDead = false;
+	public bool isDead = false;
 
-	// Update is called once per frame
 	void Update () 
 	{
 		UpdateAction();
 	}
 
-	protected virtual void Initialize()
+	public virtual void Initialize(CharacterParameterModel model)
 	{
 		this.characterMove = GetComponent<CharacterMove>();
 		this.animationController = GetComponent<AnimationController>();
 		animationController.SetAnimator(transform.FindChild("Model").GetComponent<Animator>());
+		InitCharacterParam (model);
 		isInitialized = true;
 		ChangeState(ActionState.Idle);
+	}
+
+	protected virtual void InitCharacterParam(CharacterParameterModel model)
+	{
+		this.characterParam.maxHp = model.maxHp;
+		this.characterParam.attack = model.attack;
+		this.characterParam.defence = model.defence;
+		this.characterParam.speed = model.speed;
+		this.characterParam.attackRange = model.attackRange;
+		this.characterParam.attackInterval = model.attackInterval;
+		this.characterParam.hp = this.characterParam.maxHp;
 	}
 
 	public void ChangeState(ActionState state)
@@ -151,7 +162,7 @@ public class BaseController : MonoBehaviour
 		this.animationController.Run();
 		characterMove.MoveToTarget(this.target.transform,this.characterParam.speed);
 
-		if(CheckDistance(this.target.transform.position))
+		if(CheckAttackDistance(this.target.transform.position))
 		{
 			canAttack = true;
 			ChangeState(ActionState.Attack);
@@ -187,6 +198,7 @@ public class BaseController : MonoBehaviour
 	{
 		if(target.isDead)
 		{
+			target = null;
 			ChangeState(ActionState.Idle);
 			return;
 		}
@@ -207,14 +219,22 @@ public class BaseController : MonoBehaviour
 	protected virtual void AttackStart()
 	{
 		canAttack = false;
-		Debug.Log("animstart");
 	}
 
 
 	protected virtual void AttackEnd()
 	{
+		Invoke ("NextAttack", this.characterParam.attackInterval);
+
+		if(this.target != null && !this.target.isDead)
+		{
+			AddDamageToTarget ();
+		}
+	}
+
+	private void NextAttack()
+	{
 		canAttack = true;
-		Debug.Log("animend");
 	}
 
 	#endregion
@@ -226,12 +246,14 @@ public class BaseController : MonoBehaviour
 		if(this.actionState != this.prevActionState)
 		{
 			this.DoPreviewActionState(this.prevActionState);
+			this.DeadOnEnter ();
 		}
 	}
 
 	protected virtual void DeadOnEnter()
 	{
 		this.prevActionState = this.actionState;
+		this.animationController.Death (DeadStart,DeadEnd);
 	}
 
 	protected virtual void DeadOnUpdate()
@@ -244,6 +266,16 @@ public class BaseController : MonoBehaviour
 		
 	}
 
+	protected virtual void DeadStart()
+	{
+		isDead = true;
+	}
+
+	protected virtual void DeadEnd ()
+	{
+		Destroy (this.gameObject);
+	}
+
 	#endregion
 
 	#region About find target
@@ -253,21 +285,46 @@ public class BaseController : MonoBehaviour
 		
 	}
 
-	protected bool CheckDistance(Vector2 targetPos)
+	protected bool CheckAttackDistance(Vector2 targetPos)
 	{
 		return (this.characterParam.attackRange >= Vector2.Distance(this.transform.position,targetPos));
 	}
 
 	#endregion
 
+	#region About damage
+
+	protected virtual void AddDamageToTarget()
+	{
+		if(this.target == null || this.target.isDead || isDead)
+		{
+			return;
+		}
+
+		this.target.Damaged (this.characterParam.attack);
+	}
+
+	protected virtual void Damaged(int damage)
+	{
+		this.characterParam.hp = Mathf.Clamp (this.characterParam.hp - damage, 0, this.characterParam.maxHp);
+
+		if(this.characterParam.hp == 0)
+		{
+			ChangeState (ActionState.Dead);
+		}
+		Debug.Log ("Character" + GetHashCode () + ":" + this.characterParam.hp);
+	}
+
+	#endregion
 }
 
 public class CharacterParameter
 {
-	public int hp = 0;
-	public int maxHp = 500;
-	public int attack = 10;
-	public int deffence = 5;
-	public float speed = 1f;
-	public float attackRange = 5f;
+	public int hp ;
+	public int maxHp;
+	public int attack;
+	public int defence;
+	public float speed;
+	public float attackRange;
+	public float attackInterval;
 }

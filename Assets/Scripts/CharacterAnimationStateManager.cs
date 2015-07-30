@@ -27,6 +27,9 @@ public class BattleConst
 
 	public const float CHARACTER_SCALE = 1.5f;
 
+	public const float BACKGRAOUND_WIDTH = 40.9f;
+
+	public const float CAMERA_FOLLOW_SMOOTHING = 1f;
 }
 
 public class CharacterAnimationState

@@ -7,8 +7,7 @@ public class AnimationController : MonoBehaviour
 {
 	protected Animator animator { get; private set; }
 
-	protected CharacterAttackState attackState = null;
-	protected CharacterAttackState runState = null;
+	protected CharacterAnimationStateManager stateManager = null;
 
 	Action onAnimStart = null;
 	Action onAnimEnd = null;
@@ -39,7 +38,7 @@ public class AnimationController : MonoBehaviour
 		}
 
 		this.animator = animator;
-		attackState = this.animator.GetBehaviour<CharacterAttackState>();
+		stateManager = new CharacterAnimationStateManager (this.animator);
 	}
 
 	protected void DoAction(string animationName)
@@ -60,65 +59,7 @@ public class AnimationController : MonoBehaviour
 	{
 		return (animator.GetCurrentAnimatorStateInfo(0).IsName(animation));
 	}
-
-	public IEnumerator PollAnimatorAsync(int layer, string animName, Action onAnimBegin = null, Action onAnimEnd = null)
-	{
-
-		// wait for desired animation to start
-		while (animator.GetCurrentAnimatorStateInfo(layer).IsName(animName) == false)
-			yield return null;
-
-		yield return null;
-
-		float length = animator.GetCurrentAnimatorStateInfo(layer).length;
-
-		if (onAnimBegin != null)
-			onAnimBegin();
-
-		while (animator.GetCurrentAnimatorStateInfo(layer).IsName(animName))
-		{
-			yield return null;
-		}
-
-		if (onAnimEnd != null)
-			onAnimEnd();
-
-	}
-
-	public void AnimatorInvoke(int layer, string animName, Action onAnimBegin = null, Action onAnimEnd = null)
-	{
-		this.onAnimStart = onAnimBegin;
-		this.onAnimEnd = onAnimEnd;
-		Debug.Log("animatorInvoke:"+GetHashCode());
-
-		float length = animator.GetCurrentAnimatorStateInfo(layer).length;
-		if(length <= 0)
-		{
-			return;
-		}
-
-		CallAnimBegin();
-		Invoke("CallAnimEnd",length);
-	}
-
-	void CallAnimBegin()
-	{
-		if(this.onAnimStart != null)
-		{
-			this.onAnimStart();
-			this.onAnimStart = null;
-		}
-	}
-
-	void CallAnimEnd()
-	{
-		if(this.onAnimEnd != null)
-		{
-			this.onAnimEnd();
-			this.onAnimEnd = null;
-		}
-	}
-
+		
 	#region Idle
 	public virtual void Idle()
 	{
@@ -139,25 +80,21 @@ public class AnimationController : MonoBehaviour
 
 	public bool IsRunning()
 	{
-		if (IsPlaying(CharacterAnimationState.RUN))
-			return true;
-		else
-			return false;
+		return (IsPlaying (CharacterAnimationState.RUN));
+
 	}
 	#endregion
 
 	#region Death
-	public virtual void Death()
+	public virtual void Death(Action onBegin, Action onEnd)
 	{
+		this.stateManager.RegisterDeadCallbacks (onBegin, onEnd);
 		DoAction(CharacterAnimationState.DEAD);
 	}
 
 	public bool IsDeathing()
 	{
-		if (IsPlaying(CharacterAnimationState.DEAD))
-			return true;
-		else
-			return false;
+		return (IsPlaying (CharacterAnimationState.DEAD));
 	}
 	#endregion
 
@@ -166,17 +103,14 @@ public class AnimationController : MonoBehaviour
 	{
 		if (IsAttacking()) return;
 
-		this.attackState.RegisterCallbacks(onBegin,onEnd);
+		this.stateManager.RegisterAttackCallbacks (onBegin, onEnd);
 		DoAction(CharacterAnimationState.ATTACK);
 
 	}
 
 	public bool IsAttacking()
 	{
-		if (IsPlaying(CharacterAnimationState.ATTACK))
-			return true;
-		else 
-			return false;
+		return (IsPlaying (CharacterAnimationState.ATTACK));
 	}
 	#endregion
 }

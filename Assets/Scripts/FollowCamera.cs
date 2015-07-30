@@ -4,8 +4,6 @@ using System.Linq;
 
 public class FollowCamera : MonoBehaviour 
 {
-	const float FOLLOW_SMOOTHING = 0.5f;
-
 	Vector3 offset;
 	Transform targetTransform;
 	public List<GameObject> bgList = new List<GameObject>();
@@ -41,7 +39,7 @@ public class FollowCamera : MonoBehaviour
 	/// </summary>
 	private void Follow()
 	{
-		float cameraX = Mathf.Lerp(transform.position.x,targetTransform.position.x+offset.x,FOLLOW_SMOOTHING * Time.deltaTime);
+		float cameraX = Mathf.Lerp(transform.position.x,targetTransform.position.x+offset.x,BattleConst.CAMERA_FOLLOW_SMOOTHING * Time.deltaTime);
 
 		transform.position = new Vector3(cameraX,transform.position.y, transform.position.z);
 	}

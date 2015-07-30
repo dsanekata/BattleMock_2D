@@ -2,7 +2,7 @@
 using System;
 using System.Collections;
 
-public class CharacterAttackState : CharacterStateBase
+public class CharacterDeadState : CharacterStateBase
 {
-	
+
 }
