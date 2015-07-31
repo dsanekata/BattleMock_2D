@@ -3,11 +3,11 @@ using System;
 using System.Collections;
 using System.Linq;
 
-public class AnimationController : MonoBehaviour
+public class AnimationController 
 {
 	protected Animator animator { get; private set; }
 
-	protected CharacterAnimationStateManager stateManager = null;
+	protected CharacterAnimationStateManager stateManager = new CharacterAnimationStateManager();
 
 	Action onAnimStart = null;
 	Action onAnimEnd = null;
@@ -38,7 +38,7 @@ public class AnimationController : MonoBehaviour
 		}
 
 		this.animator = animator;
-		stateManager = new CharacterAnimationStateManager (this.animator);
+		stateManager.ResetStateManager(this.animator);
 	}
 
 	protected void DoAction(string animationName)
@@ -88,6 +88,8 @@ public class AnimationController : MonoBehaviour
 	#region Death
 	public virtual void Death(Action onBegin, Action onEnd)
 	{
+		if(IsDeathing()) return;
+
 		this.stateManager.RegisterDeadCallbacks (onBegin, onEnd);
 		DoAction(CharacterAnimationState.DEAD);
 	}

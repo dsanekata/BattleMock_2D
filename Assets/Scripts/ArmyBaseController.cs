@@ -4,7 +4,7 @@ using System.Linq;
 
 public class ArmyBaseController : BaseController 
 {
-	
+
 	protected override void FindTarget ()
 	{
 		float distance = 0f;

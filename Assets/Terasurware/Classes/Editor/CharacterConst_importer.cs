@@ -8,7 +8,7 @@ using NPOI.SS.UserModel;
 
 public class CharacterConst_importer : AssetPostprocessor {
 	private static readonly string filePath = "Assets/BundleConst/Excel/CharacterConst.xls";
-	private static readonly string exportPath = "Assets/BundleConst/Excel/CharacterConst.asset";
+	private static readonly string exportPath = "Assets/BundleConst/Resources/CharacterConst.asset";
 	private static readonly string[] sheetNames = { "Army","Enemy", };
 	
 	static void OnPostprocessAllAssets (string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)

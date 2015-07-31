@@ -30,6 +30,10 @@ public class BattleConst
 	public const float BACKGRAOUND_WIDTH = 40.9f;
 
 	public const float CAMERA_FOLLOW_SMOOTHING = 1f;
+
+	public const int MAX_DAMAGE = 9999;
+
+	public const int MIN_DAMAGE = 1;
 }
 
 public class CharacterAnimationState
@@ -41,5 +45,11 @@ public class CharacterAnimationState
 	public const string ATTACK = "Attack";
 
 	public const string DEAD = "Dead";
+}
+
+public class CommonAnimationState
+{
+	public const string DAMAGE_TEXT_LEFT = "PopLeft";
+	public const string DAMAGE_TEXT_RIGHT = "PopRight";
 }
 

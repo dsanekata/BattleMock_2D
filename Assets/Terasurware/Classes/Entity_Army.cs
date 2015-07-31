@@ -16,6 +16,7 @@ public class Entity_Army : ScriptableObject
 	[System.SerializableAttribute]
 	public class Param
 	{
+		
 		public int id;
 		public int maxHp;
 		public int attack;

@@ -4,6 +4,18 @@ using System.Collections;
 public class EnemyBaseController : BaseController
 {
 		
+	public int waveId;
+
+	public override void UpdateAction ()
+	{
+		if(this.waveId != BattleManager.GetInstance().currentWaveId)
+		{
+			return;
+		}
+
+		base.UpdateAction ();
+	}
+
 	protected override void FindTarget ()
 	{
 		float distance = 0f;
@@ -23,11 +35,5 @@ public class EnemyBaseController : BaseController
 				distance = tempDistance;
 			}
 		}
-	}
-		
-	protected override void DeadStart ()
-	{
-		base.DeadStart ();
-		BattleManager.GetInstance ().RemoveEnemy (this);
 	}
 }

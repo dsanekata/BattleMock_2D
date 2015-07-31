@@ -4,14 +4,13 @@ using System.Collections;
 
 public class CharacterStateBase : StateMachineBehaviour
 {
-	Action stateEnter = null;
-	Action stateExit = null;
+	protected Action stateEnter;
+	protected Action stateExit;
 
-	public void RegisterCallbacks(Action stateEnter,Action stateExit)
+	public virtual void RegisterCallbacks(Action stateEnter,Action stateExit)
 	{
 		this.stateEnter = stateEnter;
 		this.stateExit = stateExit;
-
 	}
 
 	public override void OnStateEnter (Animator animator, AnimatorStateInfo stateInfo, int layerIndex)

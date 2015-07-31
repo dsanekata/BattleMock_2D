@@ -8,6 +8,7 @@ public class BaseController : MonoBehaviour
 
 	protected CharacterMove characterMove = null;
 	protected AnimationController animationController;
+	protected CharacterHUD hud = null;
 
 	protected CharacterParameter characterParam = new CharacterParameter();
 
@@ -20,21 +21,21 @@ public class BaseController : MonoBehaviour
 	[SerializeField]
 	protected bool canAttack = false;
 	[SerializeField]
+	protected bool canMove = false;
+	[SerializeField]
 	protected float attackDamage = 0;
 	[SerializeField]
 	public bool isDead = false;
 
-	void Update () 
-	{
-		UpdateAction();
-	}
-
 	public virtual void Initialize(CharacterParameterModel model)
 	{
 		this.characterMove = GetComponent<CharacterMove>();
-		this.animationController = GetComponent<AnimationController>();
+		this.animationController = new AnimationController();
 		animationController.SetAnimator(transform.FindChild("Model").GetComponent<Animator>());
+		hud = transform.FindChild("HUD").GetComponent<CharacterHUD>();
+		hud.InitHUD();
 		InitCharacterParam (model);
+		canMove = true;
 		isInitialized = true;
 		ChangeState(ActionState.Idle);
 	}
@@ -55,7 +56,7 @@ public class BaseController : MonoBehaviour
 		this.actionState = state;
 	}
 
-	protected virtual void UpdateAction()
+	public virtual void UpdateAction()
 	{
 		if(!isInitialized || isDead)
 		{
@@ -120,7 +121,7 @@ public class BaseController : MonoBehaviour
 	{
 		FindTarget();
 
-		if(target != null)
+		if(target != null && canMove)
 		{
 			ChangeState(ActionState.Move);
 		}
@@ -208,6 +209,7 @@ public class BaseController : MonoBehaviour
 			return;
 		}
 
+		characterMove.LookAtTarget(this.target.transform);
 		animationController.Attack(AttackStart,AttackEnd);
 	}
 
@@ -219,6 +221,7 @@ public class BaseController : MonoBehaviour
 	protected virtual void AttackStart()
 	{
 		canAttack = false;
+		canMove = false;
 	}
 
 
@@ -235,6 +238,7 @@ public class BaseController : MonoBehaviour
 	private void NextAttack()
 	{
 		canAttack = true;
+		canMove = true;
 	}
 
 	#endregion
@@ -248,6 +252,7 @@ public class BaseController : MonoBehaviour
 			this.DoPreviewActionState(this.prevActionState);
 			this.DeadOnEnter ();
 		}
+		DeadOnUpdate();
 	}
 
 	protected virtual void DeadOnEnter()
@@ -306,16 +311,34 @@ public class BaseController : MonoBehaviour
 
 	protected virtual void Damaged(int damage)
 	{
-		this.characterParam.hp = Mathf.Clamp (this.characterParam.hp - damage, 0, this.characterParam.maxHp);
+		int receivedDamage = CalcDamage(damage);
+
+		hud.PopDamageText(receivedDamage);
+
+		this.characterParam.hp = Mathf.Clamp (this.characterParam.hp - receivedDamage, 0, this.characterParam.maxHp);
 
 		if(this.characterParam.hp == 0)
 		{
 			ChangeState (ActionState.Dead);
 		}
-		Debug.Log ("Character" + GetHashCode () + ":" + this.characterParam.hp);
+	}
+
+	protected virtual int CalcDamage(int damage)
+	{
+		int calcDamage = damage - this.characterParam.defence;
+
+		return Mathf.Clamp(calcDamage,BattleConst.MIN_DAMAGE,BattleConst.MAX_DAMAGE);
 	}
 
 	#endregion
+
+	void OnEnable()
+	{
+		if(isInitialized)
+		{
+			animationController.SetAnimator(transform.FindChild("Model").GetComponent<Animator>());
+		}
+	}
 }
 
 public class CharacterParameter

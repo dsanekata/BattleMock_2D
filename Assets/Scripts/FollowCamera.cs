@@ -13,7 +13,7 @@ public class FollowCamera : MonoBehaviour
 		offset = transform.position - targetTransform.position;
 	}
 		
-	void Start()
+	public void SetTarget(Transform target)
 	{
 		targetTransform = BattleManager.GetInstance().armiesList[0].transform;
 		SetPositionInitialized();

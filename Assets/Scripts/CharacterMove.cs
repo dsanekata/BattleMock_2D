@@ -6,9 +6,12 @@ public class CharacterMove : MonoBehaviour
 	float prevPosx = 0;
 	float characterScale = 0;
 
+	Transform modelTrans = null;
+
 	void Start()
 	{
-		characterScale = this.transform.localScale.x;
+		modelTrans = this.transform.FindChild("Model");
+		characterScale = modelTrans.localScale.x;
 	}
 
 	/// <summary>
@@ -27,6 +30,20 @@ public class CharacterMove : MonoBehaviour
 		CheckDirection();
 	}
 		
+	public void LookAtTarget(Transform target)
+	{
+		float dist = target.transform.position.x - this.transform.position.x;
+
+		if(dist < 0)
+		{
+			modelTrans.localScale = new Vector3(-characterScale,characterScale,characterScale);
+		}
+		else
+		{
+			modelTrans.localScale = new Vector3(characterScale,characterScale,characterScale);
+		}
+	}
+
 	float ClampPosition(float posY)
 	{
 		return Mathf.Clamp(posY,BattleConst.POSY_MIN,BattleConst.POSY_MAX);
@@ -36,11 +53,11 @@ public class CharacterMove : MonoBehaviour
 	{
 		if(this.transform.position.x - prevPosx > 0)
 		{
-			this.transform.localScale = new Vector3(characterScale,characterScale,characterScale);
+			modelTrans.localScale = new Vector3(characterScale,characterScale,characterScale);
 		}
 		else
 		{
-			this.transform.localScale = new Vector3(-characterScale,characterScale,characterScale);
+			modelTrans.localScale = new Vector3(-characterScale,characterScale,characterScale);
 		}
 
 		prevPosx = this.transform.position.x;

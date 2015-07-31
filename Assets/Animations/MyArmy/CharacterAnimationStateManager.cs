@@ -7,7 +7,7 @@ public class CharacterAnimationStateManager
 	protected CharacterAttackState attackState = null;
 	protected CharacterDeadState deadState = null;
 
-	public CharacterAnimationStateManager(Animator _animator)
+	public void ResetStateManager(Animator _animator)
 	{
 		attackState = _animator.GetBehaviour<CharacterAttackState> ();
 		deadState = _animator.GetBehaviour<CharacterDeadState> ();
