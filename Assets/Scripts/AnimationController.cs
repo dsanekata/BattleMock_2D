@@ -31,6 +31,7 @@ public class AnimationController
 				Debug.LogError(string.Format("Animation controller locked. It already has an Animator [{0}].", animator.name));
 			}
 		}
+			
 
 		if (animator == null)
 		{

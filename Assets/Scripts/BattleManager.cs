@@ -16,10 +16,12 @@ public class BattleManager : MonoBehaviour
 		return instance;
 	}
 	static BattleManager instance;
-
 	FollowCamera followCamera = null;
 	BattleService service = new BattleService();
 	CharacterParameterModel[] armyModels = null;
+
+	[SerializeField]
+	GameObject gestureGo;
 
 	public List<ArmyBaseController> armiesList = new List<ArmyBaseController>();
 	public List<EnemyBaseController> enemiesList = new List<EnemyBaseController>();
@@ -165,6 +167,45 @@ public class BattleManager : MonoBehaviour
 		}
 
 		followCamera.SetTarget(armiesList[0].transform);
+		InitFingerGesture ();
+	}
+
+	public void SetTimeScale(float timeScale)
+	{
+		Time.timeScale = timeScale;
+	}
+
+	public void SetDefaultTimeScale()
+	{
+		SetTimeScale (1);
+	}
+
+	void InitFingerGesture()
+	{
+		if(gestureGo != null)
+		{
+			gestureGo.SetActive (true);
+		}
+	}
+
+	void OnDrag(DragGesture drag)
+	{
+
+		if(drag.StartSelection == null)
+		{
+			return;
+		}
+
+		ArmyBaseController selected = drag.StartSelection.GetComponent<ArmyBaseController> ();
+
+		if(drag.Phase == ContinuousGesturePhase.Ended || drag.ElapsedTime >= BattleConst.DRAG_TIME_LIMIT)
+		{
+			selected.DragEnd ();
+			return;
+		}
+			
+
+		selected.DragArmy (Camera.main.ScreenToWorldPoint (drag.Position));
 	}
 
 }

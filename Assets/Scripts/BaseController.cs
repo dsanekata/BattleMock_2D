@@ -9,6 +9,7 @@ public class BaseController : MonoBehaviour
 	protected CharacterMove characterMove = null;
 	protected AnimationController animationController;
 	protected CharacterHUD hud = null;
+	protected SkillController  skillController = null;
 
 	protected CharacterParameter characterParam = new CharacterParameter();
 
@@ -26,6 +27,8 @@ public class BaseController : MonoBehaviour
 	protected float attackDamage = 0;
 	[SerializeField]
 	public bool isDead = false;
+
+	protected int skillDamage;
 
 	public virtual void Initialize(CharacterParameterModel model)
 	{
@@ -49,6 +52,7 @@ public class BaseController : MonoBehaviour
 		this.characterParam.attackRange = model.attackRange;
 		this.characterParam.attackInterval = model.attackInterval;
 		this.characterParam.hp = this.characterParam.maxHp;
+		skillDamage = characterParam.attack * 5;
 	}
 
 	public void ChangeState(ActionState state)
@@ -74,6 +78,9 @@ public class BaseController : MonoBehaviour
 			case ActionState.Attack:
 				Attack();
 				break;
+			case ActionState.Skill:
+				Skill ();
+				break;
 			case ActionState.Dead:
 				Dead();
 				break;
@@ -92,6 +99,12 @@ public class BaseController : MonoBehaviour
 			break;
 		case ActionState.Attack:
 			this.AttackOnExit ();
+			break;
+		case ActionState.Skill:
+			SkillOnExit ();
+			break;
+		case ActionState.Drag:
+			DragOnExit ();
 			break;
 		case ActionState.Dead:
 			break;
@@ -209,6 +222,12 @@ public class BaseController : MonoBehaviour
 			return;
 		}
 
+		if(!CheckAttackDistance (target.transform.position))
+		{
+			ChangeState (ActionState.Idle);
+			return;
+		}
+
 		characterMove.LookAtTarget(this.target.transform);
 		animationController.Attack(AttackStart,AttackEnd);
 	}
@@ -283,6 +302,93 @@ public class BaseController : MonoBehaviour
 
 	#endregion
 
+	#region about skill
+	protected virtual void Skill()
+	{
+		if(actionState != prevActionState)
+		{
+			DoPreviewActionState (prevActionState);
+			SkillOnEnter ();
+		}
+
+		SkillOnUpdate ();
+	}
+
+	protected virtual void SkillOnEnter()
+	{
+		prevActionState = actionState;
+	}
+
+	protected virtual void SkillOnExit()
+	{
+	}
+
+	protected virtual void SkillOnUpdate()
+	{
+		if(skillController == null || isDead)
+		{
+			return;
+		}
+
+		skillController.SkillUpdate ();
+	}
+
+	protected virtual void SkillStart()
+	{
+	}
+		
+	protected virtual void SkillFinish()
+	{
+	}
+
+	protected virtual bool CanSkillInvoke()
+	{
+		return (characterParam.skillPoint >= skillController.needSkillPoint);
+	}
+	#endregion
+
+	#region about drag
+	protected virtual void Drag()
+	{
+		if(actionState != prevActionState)
+		{
+			DoPreviewActionState (prevActionState);
+			DragOnEnter ();
+		}
+
+		DragOnUpdate ();
+	}
+
+	protected virtual void DragOnEnter()
+	{
+		prevActionState = actionState;
+		canAttack = false;
+		canMove = false;
+	}
+
+	protected virtual void DragOnUpdate()
+	{
+	}
+
+	protected virtual void DragOnExit()
+	{
+		canAttack = true;
+		canMove = true;
+	}
+
+	public void DragArmy(Vector3 pos)
+	{
+		this.transform.position = new Vector3(pos.x,Mathf.Clamp(pos.y,BattleConst.POSY_MIN,BattleConst.POSY_MAX), Mathf.Clamp(pos.y,BattleConst.POSY_MIN,BattleConst.POSY_MAX));
+		ChangeState (ActionState.Drag);
+	}
+
+	public void DragEnd()
+	{
+		ChangeState (ActionState.Idle);
+	}
+
+	#endregion
+
 	#region About find target
 
 	protected virtual void FindTarget()
@@ -301,15 +407,17 @@ public class BaseController : MonoBehaviour
 
 	protected virtual void AddDamageToTarget()
 	{
-		if(this.target == null || this.target.isDead || isDead)
-		{
+		if(this.target == null ||
+			this.target.isDead || 
+			isDead || 
+			!CheckAttackDistance(target.transform.position)){
 			return;
 		}
 
-		this.target.Damaged (this.characterParam.attack);
+		characterParam.skillPoint += this.target.Damaged (this.characterParam.attack);
 	}
 
-	protected virtual void Damaged(int damage)
+	public virtual int Damaged(int damage)
 	{
 		int receivedDamage = CalcDamage(damage);
 
@@ -321,6 +429,8 @@ public class BaseController : MonoBehaviour
 		{
 			ChangeState (ActionState.Dead);
 		}
+
+		return receivedDamage;
 	}
 
 	protected virtual int CalcDamage(int damage)
@@ -350,4 +460,5 @@ public class CharacterParameter
 	public float speed;
 	public float attackRange;
 	public float attackInterval;
+	public int skillPoint;
 }

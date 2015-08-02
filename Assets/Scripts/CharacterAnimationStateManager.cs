@@ -12,6 +12,8 @@ public enum ActionState
 	Move,
 	Attack,
 	Dead,
+	Skill,
+	Drag,
 }
 
 public class BattleConst
@@ -34,6 +36,14 @@ public class BattleConst
 	public const int MAX_DAMAGE = 9999;
 
 	public const int MIN_DAMAGE = 1;
+
+	public const float ATTACK_EFFECT_SPEED = 15f;
+
+	public const int SKILL_POINT = 200;
+
+	public const float SKILL_CUTIN_DURATION = 1.5f;
+
+	public const float DRAG_TIME_LIMIT = 5f;
 }
 
 public class CharacterAnimationState
@@ -51,5 +61,17 @@ public class CommonAnimationState
 {
 	public const string DAMAGE_TEXT_LEFT = "PopLeft";
 	public const string DAMAGE_TEXT_RIGHT = "PopRight";
+
+	public const string EFFECT_ATTACK_MOVE = "Moving";
+
+	public const string EFFECT_ATTACK_HIT = "Hit";
 }
+
+public enum AttackType
+{
+	SHORT_DISTANCE,
+	MIDDLE_DISTANCE,
+	LONG_DISTANCE,
+}
+
 
