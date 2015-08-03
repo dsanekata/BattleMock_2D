@@ -49,8 +49,10 @@ public class CharacterConst_importer : AssetPostprocessor {
 					cell = row.GetCell(2); p.attack = (int)(cell == null ? 0 : cell.NumericCellValue);
 					cell = row.GetCell(3); p.defence = (int)(cell == null ? 0 : cell.NumericCellValue);
 					cell = row.GetCell(4); p.speed = (float)(cell == null ? 0 : cell.NumericCellValue);
-					cell = row.GetCell(5); p.attackRange = (float)(cell == null ? 0 : cell.NumericCellValue);
-					cell = row.GetCell(6); p.attackInterval = (float)(cell == null ? 0 : cell.NumericCellValue);
+					cell = row.GetCell(5); p.critical = (float)(cell == null ? 0 : cell.NumericCellValue);
+					cell = row.GetCell(6); p.maxSp = (int)(cell == null ? 0 : cell.NumericCellValue);
+					cell = row.GetCell(7); p.attackRange = (float)(cell == null ? 0 : cell.NumericCellValue);
+					cell = row.GetCell(8); p.attackInterval = (float)(cell == null ? 0 : cell.NumericCellValue);
 						s.list.Add (p);
 					}
 					data.sheets.Add(s);

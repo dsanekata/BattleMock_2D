@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class BattleUIManager : MonoBehaviour 
@@ -17,11 +18,48 @@ public class BattleUIManager : MonoBehaviour
 
 	GameObject cutIn = null;
 
+	Text dragCountText = null;
+	Text dragLimitText = null;
+
+	Toggle autoSkillToggle = null;
+
+	public bool autoInvokeSkill = true;
+
 	void Awake()
 	{
-		cutIn = transform.FindChild ("CutInImage").gameObject;
 	}
 		
+	public void InitTransforms()
+	{
+		cutIn = transform.FindChild ("CutInImage").gameObject;
+		dragCountText = transform.FindChild("Offset/Top/Drag/CountText").GetComponent<Text>();
+		dragLimitText = transform.FindChild("Offset/Top/Drag/LimitText/Value").GetComponent<Text>();
+		autoSkillToggle = transform.FindChild("Offset/Top/AutoSkill/Toggle").GetComponent<Toggle>();
+		autoSkillToggle.onValueChanged.AddListener(SetAutoSkill);
+	}
+
+	public void SetAutoSkill(bool isAuto)
+	{
+		autoInvokeSkill = isAuto;
+	}
+
+	public void SetDragCount(int count)
+	{
+		dragCountText.text = string.Format("x{0}",count);
+	}
+
+	public void SetDragLimit(float time)
+	{
+		if(time <= 0)
+		{
+			dragLimitText.text = "-";
+		}
+		else
+		{
+			dragLimitText.text = string.Format("{0:f2}",time);
+		}
+	}
+
 	public void StartSkillCutIn(float waitTime,System.Action callback)
 	{
 		StartCoroutine (SkillCutIn (waitTime, callback));

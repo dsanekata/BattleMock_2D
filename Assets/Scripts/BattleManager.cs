@@ -23,12 +23,18 @@ public class BattleManager : MonoBehaviour
 	[SerializeField]
 	GameObject gestureGo;
 
+	[SerializeField]
+	Transform uiCanvas;
+
 	public List<ArmyBaseController> armiesList = new List<ArmyBaseController>();
 	public List<EnemyBaseController> enemiesList = new List<EnemyBaseController>();
+	public BattleState battleState;
 
 	GameObject enemySrc = null;
 
 	public int currentWaveId = 0;
+	int dragCount = BattleConst.DRAG_LIMIT;
+	bool canUpdate = true;
 
 	void Awake()
 	{
@@ -38,12 +44,25 @@ public class BattleManager : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
+		if(!canUpdate)
+		{
+			return;
+		}
+
 		UpdateCharacters();
 	}
 
 	void LateUpdate()
 	{
+		if(!canUpdate)
+		{
+			return;
+		}
+
+		CheckRemainArmy();
 		CheckRemainEnemy();
+		followCamera.UpdateCameraPosition();
+		CheckBattleState();
 	}
 
 	void InitBattleManager()
@@ -51,7 +70,7 @@ public class BattleManager : MonoBehaviour
 		armiesList.Clear ();
 		enemiesList.Clear ();
 		followCamera = Camera.main.GetComponent<FollowCamera>();
-
+		BattleUIManager.GetInstance().InitTransforms();
 		service.LoadData();
 
 		Transform enemiesParent = this.transform.root.FindChild ("Enemies");
@@ -65,7 +84,7 @@ public class BattleManager : MonoBehaviour
 		InitArmies();
 		InitEnemies();
 
-		BattleStart();
+		Invoke("BattleStart",0.5f);
 	}
 
 	void UpdateCharacters()
@@ -78,6 +97,19 @@ public class BattleManager : MonoBehaviour
 		for(int i = 0; i < this.enemiesList.Count; i++)
 		{
 			enemiesList[i].UpdateAction();
+		}
+	}
+
+	void CheckBattleState()
+	{
+
+		if(followCamera.IsEnemyInsideCamera(enemiesList.Where(x => x.waveId == currentWaveId).ToArray()))
+		{
+			battleState = BattleState.InBattle;
+		}
+		else
+		{
+			battleState = BattleState.Moving;
 		}
 	}
 
@@ -105,6 +137,21 @@ public class BattleManager : MonoBehaviour
 	}
 		
 		
+	void CheckRemainArmy()
+	{
+		List<ArmyBaseController> newList = armiesList;
+
+		for(int i = 0; i < newList.Count; i++)
+		{
+			if(armiesList[i].isDead)
+			{
+				newList.Remove(armiesList[i]);
+			}
+		}
+			
+		armiesList = newList;
+	}
+
 	void CheckRemainEnemy()
 	{
 		List<EnemyBaseController> newList = enemiesList;
@@ -153,6 +200,7 @@ public class BattleManager : MonoBehaviour
 			Vector3 startPos = this.transform.root.FindChild ("StartPoints").FindChild("StartPoint_"+(i+1).ToString()).position;
 			army.transform.position = startPos;
 			army.Initialize(modelList[i]);
+			army.SetHUDHandle(uiCanvas.FindChild("Offset/Bottom/Armies").GetChild(i).GetComponent<CharacterHUDHandle>());
 			this.armiesList.Add(army);
 		}
 
@@ -167,7 +215,55 @@ public class BattleManager : MonoBehaviour
 		}
 
 		followCamera.SetTarget(armiesList[0].transform);
+		BattleUIManager.GetInstance().SetDragCount(dragCount);
+		SoundManager.GetInstance().PlayBGM(SoundConst.BGM_BATTLE);
 		InitFingerGesture ();
+	}
+
+	public void SetDraggingArmy(bool dragging)
+	{
+		followCamera.isDragging = dragging;
+	}
+
+	public void PlayBattle()
+	{
+		canUpdate = true;
+		for(int i = 0; i < armiesList.Count; i++)
+		{
+			if(armiesList[i] != null)
+			{
+				armiesList[i].PlayController();
+			}
+		}
+
+		for(int i = 0; i < enemiesList.Count; i++)
+		{
+			if(enemiesList[i] != null)
+			{
+				enemiesList[i].PlayController();
+			}
+		}
+	}
+
+	public void StopBattle()
+	{
+		canUpdate = false;
+
+		for(int i = 0; i < armiesList.Count; i++)
+		{
+			if(armiesList[i] != null)
+			{
+				armiesList[i].PauseController();
+			}
+		}
+
+		for(int i = 0; i < enemiesList.Count; i++)
+		{
+			if(enemiesList[i] != null)
+			{
+				enemiesList[i].PauseController();
+			}
+		}
 	}
 
 	public void SetTimeScale(float timeScale)
@@ -190,22 +286,48 @@ public class BattleManager : MonoBehaviour
 
 	void OnDrag(DragGesture drag)
 	{
-
-		if(drag.StartSelection == null)
+		
+		if(drag.StartSelection == null || dragCount == 0)
 		{
 			return;
 		}
 
 		ArmyBaseController selected = drag.StartSelection.GetComponent<ArmyBaseController> ();
 
-		if(drag.Phase == ContinuousGesturePhase.Ended || drag.ElapsedTime >= BattleConst.DRAG_TIME_LIMIT)
+		if(!selected.canDrag)
 		{
-			selected.DragEnd ();
+			drag.ForcedFinishDrag();
 			return;
 		}
-			
+
+		if((selected.GetCurrentState() == ActionState.Drag && drag.ElapsedTime >= BattleConst.DRAG_TIME_LIMIT) ||
+			drag.Phase == ContinuousGesturePhase.Ended)
+		{
+			dragCount --;
+			BattleUIManager.GetInstance().SetDragCount(dragCount);
+			BattleUIManager.GetInstance().SetDragLimit(0);
+			selected.DragEnd();
+			drag.ForcedFinishDrag();
+			return;
+		}
+
+		BattleUIManager.GetInstance().SetDragLimit(BattleConst.DRAG_TIME_LIMIT - drag.ElapsedTime);
+
+		Vector3 viewPoint = Camera.main.ScreenToViewportPoint(drag.Position);
+
+		if(viewPoint.x <= 0 || viewPoint.x >= 1)
+		{
+			return;
+		}
 
 		selected.DragArmy (Camera.main.ScreenToWorldPoint (drag.Position));
 	}
 
+	IEnumerator CallWaitForEndOfFrame(System.Action callback)
+	{
+		yield return new WaitForEndOfFrame();
+
+		callback();
+	}
 }
+

@@ -24,6 +24,11 @@ public class DragGesture : ContinuousGesture
     {
         get { return Position - StartPosition; }
     }
+
+	public void ForcedFinishDrag()
+	{
+		StartSelection = null;
+	}
 }
 
 /// <summary>

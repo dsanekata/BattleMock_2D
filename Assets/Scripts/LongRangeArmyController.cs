@@ -14,11 +14,13 @@ public class LongRangeArmyController : ArmyBaseController
 
 	protected override void AttackStart ()
 	{
-		base.AttackStart ();
+		canAttack = false;
+		canMove = false;
 
 		if (target != null && !target.isDead) 
 		{
 			slash.Shot (this.target.transform, AddDamageToTarget);
+			SoundManager.GetInstance().PlaySE(SoundConst.SE_LASER);
 		}
 	}
 

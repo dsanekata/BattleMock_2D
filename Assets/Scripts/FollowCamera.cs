@@ -6,7 +6,10 @@ public class FollowCamera : MonoBehaviour
 {
 	Vector3 offset;
 	Transform targetTransform;
+	float smoothing;
 	public List<GameObject> bgList = new List<GameObject>();
+
+	public bool isDragging = false;
 
 	void SetPositionInitialized()
 	{
@@ -15,19 +18,35 @@ public class FollowCamera : MonoBehaviour
 		
 	public void SetTarget(Transform target)
 	{
-		targetTransform = BattleManager.GetInstance().armiesList[0].transform;
+		targetTransform = target;
 		SetPositionInitialized();
 	}
 
-	void LateUpdate()
+	public void SetTarget(BaseController target)
 	{
-		UpdateCameraPosition();
-	}
+		if(target == null)
+		{
+			targetTransform = null;
+			return;
+		}
 
+		SetTarget(target.transform);
+	}
+		
 	public void UpdateCameraPosition()
 	{
-		if(targetTransform == null)
+		if(isDragging)
 		{
+			smoothing = BattleConst.CAMERA_FOLLWO_SMOOTHING_LOW;
+		}
+		else
+		{
+			smoothing = BattleConst.CAMERA_FOLLOW_SMOOTHING_DEFAULT;
+		}	
+
+		if(targetTransform == null || targetTransform.GetComponent<BaseController>().isDead)
+		{
+			SetTarget(BattleManager.GetInstance().armiesList.Find(x => x.gameObject != null && !x.isDead));
 			return;
 		}
 
@@ -39,8 +58,31 @@ public class FollowCamera : MonoBehaviour
 	/// </summary>
 	private void Follow()
 	{
-		float cameraX = Mathf.Lerp(transform.position.x,targetTransform.position.x+offset.x,BattleConst.CAMERA_FOLLOW_SMOOTHING * Time.deltaTime);
+		float cameraX = Mathf.Lerp(transform.position.x,targetTransform.position.x+offset.x,smoothing * Time.deltaTime);
 
 		transform.position = new Vector3(cameraX,transform.position.y, transform.position.z);
 	}
+
+	public bool IsEnemyInsideCamera(EnemyBaseController[] enemies)
+	{
+		bool inSide = false;
+
+		for(int i = 0; i < enemies.Length; i++)
+		{
+			if(enemies[i] != null)
+			{
+				Vector3 viewportPos = Camera.main.WorldToViewportPoint(enemies[i].transform.position);
+
+				if(viewportPos.x <= 1 && viewportPos.x >= 0)
+				{
+					inSide = true;
+					break;
+				}
+			}
+		}
+
+		return inSide;
+	}
+
+
 }

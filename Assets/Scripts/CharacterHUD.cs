@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class CharacterHUD : MonoBehaviour
 {
 	Text[] damageTextList = null;
+	Image[] damageBgList = null;
 	int textIndex = 0;
 
 	public void InitHUD()
@@ -15,21 +16,25 @@ public class CharacterHUD : MonoBehaviour
 	void InitDamageTexts()
 	{
 		damageTextList = this.transform.FindChild("Damage").GetComponentsInChildren<Text>(true);
+		damageBgList = transform.FindChild("Damage").GetComponentsInChildren<Image>(true);
 
 		for(int i=0; i <damageTextList.Length; i++)
 		{
 			damageTextList[i].text = string.Empty;
-			damageTextList[i].gameObject.SetActive(false);
 		}
 	}
 
-	public void PopDamageText(int damage)
+	public void PopDamageText(int damage,bool isCritical = false)
 	{
-		damageTextList[textIndex].gameObject.SetActive(true);
+		damageBgList[textIndex].gameObject.SetActive(true);
 		damageTextList[textIndex].text = damage.ToString();
 
-		string animName = (textIndex % 2 == 0) ? CommonAnimationState.DAMAGE_TEXT_LEFT : CommonAnimationState.DAMAGE_TEXT_RIGHT;
-		damageTextList[textIndex].GetComponent<Animator>().Play(animName);
+		damageBgList[textIndex].enabled = isCritical;
+
+		string animName = (textIndex % 2 == 0) ? 
+			((isCritical) ? CommonAnimationState.DAMAGE_TEXT_LEFT_CRITICAL : CommonAnimationState.DAMAGE_TEXT_LEFT) :
+			((isCritical) ? CommonAnimationState.DAMAGE_TEXT_RIGHT_CRITICAL : CommonAnimationState.DAMAGE_TEXT_RIGHT);
+		damageBgList[textIndex].GetComponent<Animator>().Play(animName);
 		textIndex ++;
 
 		if(textIndex > damageTextList.Length - 1)

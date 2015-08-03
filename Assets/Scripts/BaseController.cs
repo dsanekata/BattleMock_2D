@@ -13,7 +13,7 @@ public class BaseController : MonoBehaviour
 
 	protected CharacterParameter characterParam = new CharacterParameter();
 
-	private bool isInitialized = false;
+	protected bool isInitialized = false;
 
 	[SerializeField]
 	protected ActionState actionState = ActionState.None;
@@ -28,6 +28,8 @@ public class BaseController : MonoBehaviour
 	[SerializeField]
 	public bool isDead = false;
 
+	public bool canDrag = false;
+
 	protected int skillDamage;
 
 	public virtual void Initialize(CharacterParameterModel model)
@@ -40,6 +42,7 @@ public class BaseController : MonoBehaviour
 		InitCharacterParam (model);
 		canMove = true;
 		isInitialized = true;
+		canDrag = true;
 		ChangeState(ActionState.Idle);
 	}
 
@@ -49,6 +52,8 @@ public class BaseController : MonoBehaviour
 		this.characterParam.attack = model.attack;
 		this.characterParam.defence = model.defence;
 		this.characterParam.speed = model.speed;
+		this.characterParam.critical = model.critical;
+		this.characterParam.maxSp = model.maxSp;
 		this.characterParam.attackRange = model.attackRange;
 		this.characterParam.attackInterval = model.attackInterval;
 		this.characterParam.hp = this.characterParam.maxHp;
@@ -80,6 +85,9 @@ public class BaseController : MonoBehaviour
 				break;
 			case ActionState.Skill:
 				Skill ();
+				break;
+			case ActionState.Drag:
+				Drag();
 				break;
 			case ActionState.Dead:
 				Dead();
@@ -163,6 +171,8 @@ public class BaseController : MonoBehaviour
 	protected virtual void MoveOnEnter()
 	{
 		this.prevActionState = this.actionState;
+		canAttack = true;
+		canDrag = true;
 	}
 
 	protected virtual void MoveOnUpdate()
@@ -216,12 +226,12 @@ public class BaseController : MonoBehaviour
 			ChangeState(ActionState.Idle);
 			return;
 		}
-
+			
 		if(!canAttack)
 		{
 			return;
 		}
-
+			
 		if(!CheckAttackDistance (target.transform.position))
 		{
 			ChangeState (ActionState.Idle);
@@ -282,12 +292,10 @@ public class BaseController : MonoBehaviour
 
 	protected virtual void DeadOnUpdate()
 	{
-		
 	}
 
 	protected virtual void DeadOnExit()
-	{
-		
+	{		
 	}
 
 	protected virtual void DeadStart()
@@ -321,6 +329,7 @@ public class BaseController : MonoBehaviour
 
 	protected virtual void SkillOnExit()
 	{
+		skillController.ForcedFinishSkill();
 	}
 
 	protected virtual void SkillOnUpdate()
@@ -330,20 +339,22 @@ public class BaseController : MonoBehaviour
 			return;
 		}
 
-		skillController.SkillUpdate ();
+		skillController.SkillUpdate();
 	}
 
 	protected virtual void SkillStart()
 	{
+		
 	}
 		
 	protected virtual void SkillFinish()
 	{
+		
 	}
 
 	protected virtual bool CanSkillInvoke()
 	{
-		return (characterParam.skillPoint >= skillController.needSkillPoint);
+		return (characterParam.sp >= skillController.needSkillPoint);
 	}
 	#endregion
 
@@ -364,16 +375,19 @@ public class BaseController : MonoBehaviour
 		prevActionState = actionState;
 		canAttack = false;
 		canMove = false;
+		BattleManager.GetInstance().SetDraggingArmy(true);
 	}
 
 	protected virtual void DragOnUpdate()
 	{
+		animationController.Drag();
 	}
 
 	protected virtual void DragOnExit()
 	{
 		canAttack = true;
 		canMove = true;
+		BattleManager.GetInstance().SetDraggingArmy(false);
 	}
 
 	public void DragArmy(Vector3 pos)
@@ -386,7 +400,7 @@ public class BaseController : MonoBehaviour
 	{
 		ChangeState (ActionState.Idle);
 	}
-
+		
 	#endregion
 
 	#region About find target
@@ -414,16 +428,31 @@ public class BaseController : MonoBehaviour
 			return;
 		}
 
-		characterParam.skillPoint += this.target.Damaged (this.characterParam.attack);
+		float random = Random.Range(0,BattleConst.CRITICAL_MAX);
+		bool isCritical = ((float)random <= characterParam.critical / BattleConst.CRITICAL_PARAM_DIVISION);
+
+		float damage = this.characterParam.attack;
+
+		if(isCritical)
+		{
+			damage *= BattleConst.CRITICAL_DAMAGEUP_FACTOR;
+		}
+
+		ModifySp(this.target.Damaged (Mathf.RoundToInt(damage),isCritical));
 	}
 
-	public virtual int Damaged(int damage)
+	public virtual int Damaged(int damage,bool isCritical=false)
 	{
+		if(IsInvincible())
+		{
+			return 0;
+		}
+
 		int receivedDamage = CalcDamage(damage);
 
-		hud.PopDamageText(receivedDamage);
+		hud.PopDamageText(receivedDamage,isCritical);
 
-		this.characterParam.hp = Mathf.Clamp (this.characterParam.hp - receivedDamage, 0, this.characterParam.maxHp);
+		ModifyHp(-receivedDamage);
 
 		if(this.characterParam.hp == 0)
 		{
@@ -433,14 +462,62 @@ public class BaseController : MonoBehaviour
 		return receivedDamage;
 	}
 
-	protected virtual int CalcDamage(int damage)
+	protected virtual int CalcDamage(float damage)
 	{
-		int calcDamage = damage - this.characterParam.defence;
+		int calcDamage = Mathf.RoundToInt(damage - this.characterParam.defence);
 
 		return Mathf.Clamp(calcDamage,BattleConst.MIN_DAMAGE,BattleConst.MAX_DAMAGE);
 	}
 
+	public virtual bool IsInvincible()
+	{
+		return (actionState == ActionState.Skill || actionState == ActionState.Drag);
+	}
+
+	protected virtual void ModifyHp(int amount)
+	{
+		this.characterParam.hp += amount;
+		this.characterParam.hp = Mathf.Clamp(this.characterParam.hp,0,characterParam.maxHp);
+	}
+
+	protected virtual void ModifySp(int amount)
+	{
+		this.characterParam.sp += amount;
+		this.characterParam.sp = Mathf.Clamp(this.characterParam.sp,0,characterParam.maxSp);
+	}
+
 	#endregion
+
+	public ActionState GetCurrentState()
+	{
+		return actionState;
+	}
+
+	public virtual void PlayController()
+	{
+		this.enabled = true;
+		animationController.EnaleAnimator();
+	}
+
+	public virtual void PauseController()
+	{
+		this.enabled = false;
+		animationController.DisableAnimator();
+	}
+
+	public bool IsInsideCamera()
+	{
+		bool inSide = false;
+
+		Vector3 viewportPos = Camera.main.WorldToViewportPoint(transform.position);
+
+		if(viewportPos.x <= 1 || viewportPos.x >= 0)
+		{
+			inSide = true;
+		}
+
+		return inSide;
+	}
 
 	void OnEnable()
 	{
@@ -458,7 +535,9 @@ public class CharacterParameter
 	public int attack;
 	public int defence;
 	public float speed;
+	public float critical;
+	public int maxSp;
 	public float attackRange;
 	public float attackInterval;
-	public int skillPoint;
+	public int sp;
 }

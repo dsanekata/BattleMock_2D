@@ -108,6 +108,7 @@ public class AnimationController
 
 		this.stateManager.RegisterAttackCallbacks (onBegin, onEnd);
 		DoAction(CharacterAnimationState.ATTACK);
+		animator.StopPlayback();
 
 	}
 
@@ -116,4 +117,29 @@ public class AnimationController
 		return (IsPlaying (CharacterAnimationState.ATTACK));
 	}
 	#endregion
+
+	#region Drag
+
+	public virtual void Drag()
+	{
+		if(IsDragging()) return;
+
+		DoAction(CharacterAnimationState.DRAGGING);
+	}
+
+	public bool IsDragging()
+	{
+		return (IsPlaying(CharacterAnimationState.DRAGGING));
+	}
+	#endregion
+
+	public void EnaleAnimator()
+	{
+		animator.speed = 1f;;
+	}
+
+	public void DisableAnimator()
+	{
+		animator.speed = 0f;
+	}
 }

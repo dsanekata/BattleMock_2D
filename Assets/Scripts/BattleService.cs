@@ -39,6 +39,8 @@ public class BattleService
 			paramModel.attack = model.attack;
 			paramModel.defence = model.defence;
 			paramModel.speed = model.speed;
+			paramModel.critical = model.critical;
+			paramModel.maxSp = model.maxSp;
 			paramModel.attackRange = model.attackRange;
 			paramModel.attackInterval = model.attackInterval;
 
@@ -79,6 +81,8 @@ public class BattleService
 			paramModel.attack = model.attack;
 			paramModel.defence = model.defence;
 			paramModel.speed = model.speed;
+			paramModel.critical = model.critical;
+			paramModel.maxSp = model.maxSp;
 			paramModel.attackRange = model.attackRange;
 			paramModel.attackInterval = model.attackInterval;
 

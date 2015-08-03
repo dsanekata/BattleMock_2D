@@ -16,6 +16,12 @@ public class EnemyBaseController : BaseController
 		base.UpdateAction ();
 	}
 
+	protected override void AttackStart ()
+	{
+		base.AttackStart ();
+		SoundManager.GetInstance().PlaySE(SoundConst.SE_BLOW);
+	}
+
 	protected override void FindTarget ()
 	{
 		float distance = 0f;
@@ -24,6 +30,7 @@ public class EnemyBaseController : BaseController
 		{
 			if (BattleManager.GetInstance ().armiesList [i] == null ||
 			    BattleManager.GetInstance ().armiesList [i].gameObject == null ||
+				BattleManager.GetInstance().armiesList[i].IsInvincible() ||
 			    BattleManager.GetInstance ().armiesList [i].isDead) {
 				continue;
 			}

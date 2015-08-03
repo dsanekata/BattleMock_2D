@@ -22,6 +22,8 @@ public class Entity_Army : ScriptableObject
 		public int attack;
 		public int defence;
 		public float speed;
+		public float critical;
+		public int maxSp;
 		public float attackRange;
 		public float attackInterval;
 	}

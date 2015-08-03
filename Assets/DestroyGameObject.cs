@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Test : MonoBehaviour {
+public class NewBehaviourScript : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
@@ -11,10 +11,5 @@ public class Test : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 	
-	}
-
-	void OnTap(TapGesture tap)
-	{
-		Debug.Log (tap.StartSelection);
 	}
 }

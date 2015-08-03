@@ -5,6 +5,7 @@ using System.Linq;
 public class ArmyBaseController : BaseController 
 {
 	public float skillFinishTime;
+	CharacterHUDHandle hudHandle = null;
 
 	public override void Initialize (CharacterParameterModel model)
 	{
@@ -18,6 +19,53 @@ public class ArmyBaseController : BaseController
 
 	}
 
+	public override void UpdateAction ()
+	{
+		Debug.Log(actionState);
+
+		if(!isInitialized || isDead)
+		{
+			return;
+		}
+
+		switch(this.actionState)
+		{
+		case ActionState.Idle:
+			Idle();
+			break;
+		case ActionState.Move:
+			Move();
+			break;
+		case ActionState.Attack:
+			Attack();
+			break;
+		case ActionState.Skill:
+			Skill ();
+			break;
+		case ActionState.Drag:
+			Drag();
+			break;
+		case ActionState.Dead:
+			Dead();
+			break;
+		}
+
+		hudHandle.UpdateUI();
+		hudHandle.SetCanSkill(CanSkillInvoke());
+	}
+
+	public void SetHUDHandle(CharacterHUDHandle handle)
+	{
+		this.hudHandle = handle;
+		hudHandle.Init(this.characterParam.maxHp,this.characterParam.maxSp);
+		hudHandle.RegisterIconClickEvent(()=>{
+			if(CanSkillInvoke())
+			{
+				InvokeSkill();
+			}	
+		});
+	}
+		
 	protected override void AttackOnUpdate ()
 	{
 		if(target.isDead)
@@ -40,10 +88,9 @@ public class ArmyBaseController : BaseController
 
 		characterMove.LookAtTarget(this.target.transform);
 
-		if(skillController != null && CanSkillInvoke())
+		if(skillController != null && BattleUIManager.GetInstance().autoInvokeSkill && CanSkillInvoke())
 		{
-			BattleManager.GetInstance ().SetTimeScale (0);
-			BattleUIManager.GetInstance ().StartSkillCutIn (1, SkillStart);
+			InvokeSkill();
 		}
 		else
 		{
@@ -51,13 +98,21 @@ public class ArmyBaseController : BaseController
 		}
 
 	}
-		
+
+	protected override void AttackStart ()
+	{
+		base.AttackStart ();
+		SoundManager.GetInstance().PlaySE(SoundConst.SE_MACHINEGUN);
+	}
+
 
 	protected override void SkillStart ()
 	{
-		BattleManager.GetInstance ().SetDefaultTimeScale();
+		BattleManager.GetInstance ().PlayBattle();
+		SoundManager.GetInstance().PlaySE(skillController.GetSkillSeName());
 		skillController.InvokeSkill (skillFinishTime,SkillFinish);
-		ChangeState (ActionState.Skill);
+		ModifySp(-skillController.needSkillPoint);
+		canDrag = false;
 	}
 
 	protected override void SkillFinish ()
@@ -65,9 +120,44 @@ public class ArmyBaseController : BaseController
 		AddDamageToAllEnemies ();
 		canAttack = true;
 		canMove = true;
+		canDrag = true;
 		ChangeState (ActionState.Idle);
 	}
 
+	protected override void ModifyHp (int amount)
+	{
+		base.ModifyHp (amount);
+		hudHandle.ChangeHpValue(this.characterParam.hp);
+	}
+
+	protected override void ModifySp (int amount)
+	{
+		base.ModifySp (amount);
+		hudHandle.ChangeSpValue(this.characterParam.sp);
+	}
+
+	protected override void AddDamageToTarget ()
+	{
+		if(this.target == null ||
+			this.target.isDead || 
+			isDead || 
+			!CheckAttackDistance(target.transform.position)){
+			return;
+		}
+
+		float random = Random.Range(0,BattleConst.CRITICAL_MAX);
+		bool isCritical = ((float)random <= characterParam.critical / BattleConst.CRITICAL_PARAM_DIVISION);
+
+		float damage = this.characterParam.attack;
+
+		if(isCritical)
+		{
+			damage *= BattleConst.CRITICAL_DAMAGEUP_FACTOR;
+		}
+
+		ModifySp(this.target.Damaged (Mathf.RoundToInt(damage),isCritical));
+	}
+		
 	protected override void FindTarget ()
 	{
 		float distance = 0f;
@@ -89,12 +179,17 @@ public class ArmyBaseController : BaseController
 		}
 	}
 
+	protected override void DeadOnEnter ()
+	{
+		base.DeadOnEnter ();
+		hudHandle.SetMask(true);
+	}
+
 	protected void AddDamageToAllEnemies()
 	{
 		EnemyBaseController[] targetList = BattleManager.GetInstance ().enemiesList.Where (x => !x.isDead 
-			&& x.gameObject.activeInHierarchy).ToArray();
+			&& x.gameObject.activeInHierarchy && x.IsInsideCamera()).ToArray();
 
-		Debug.Log (targetList);
 		if(targetList == null)
 		{
 			return;
@@ -102,12 +197,23 @@ public class ArmyBaseController : BaseController
 
 		for(int i = 0; i < targetList.Length; i++)
 		{
-			targetList [i].Damaged (skillDamage);
+			targetList [i].Damaged (skillDamage,true);
+		}
+			
+	}
+
+	protected void InvokeSkill()
+	{
+		Debug.Log(skillController.invokedSkill);
+		if(BattleManager.GetInstance().battleState != BattleState.InBattle || skillController.invokedSkill)
+		{
+			return;
 		}
 
-		characterParam.skillPoint -= BattleConst.SKILL_POINT;
-
-		Mathf.Clamp (characterParam.skillPoint, 0, 9999);
+		SoundManager.GetInstance().PlaySE(SoundConst.SE_SKILL_INVOKE);
+		BattleManager.GetInstance ().StopBattle();
+		BattleUIManager.GetInstance ().StartSkillCutIn (1, SkillStart);
+		ChangeState(ActionState.Skill);
 	}
 
 
