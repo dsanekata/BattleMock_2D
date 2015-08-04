@@ -4,7 +4,9 @@ using System.Collections;
 public class EnemyBaseController : BaseController
 {
 		
-	public int waveId;
+	public int enemyId = 1;
+	public int waveId = 1;
+	public bool isBoss = false;
 
 	public override void UpdateAction ()
 	{
@@ -31,7 +33,8 @@ public class EnemyBaseController : BaseController
 			if (BattleManager.GetInstance ().armiesList [i] == null ||
 			    BattleManager.GetInstance ().armiesList [i].gameObject == null ||
 				BattleManager.GetInstance().armiesList[i].IsInvincible() ||
-			    BattleManager.GetInstance ().armiesList [i].isDead) {
+			    BattleManager.GetInstance ().armiesList [i].isDead ||
+				!BattleManager.GetInstance().armiesList[i].gameObject.activeSelf) {
 				continue;
 			}
 

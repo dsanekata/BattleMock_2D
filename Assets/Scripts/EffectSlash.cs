@@ -29,11 +29,18 @@ public class EffectSlash : EffectBase
 
 		PlayMoving ();
 	}
-
-	public void Update()
+		
+	public override void UpdateEffect ()
 	{
-		MoveToTarget ();
+		MoveToTarget();
 	}
+
+	public override void Reset ()
+	{
+		base.Reset();
+		isShot = false;
+	}
+		
 
 	void MoveToTarget()
 	{

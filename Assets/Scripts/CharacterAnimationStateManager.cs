@@ -7,8 +7,10 @@ public enum BattleStatus
 
 public enum BattleState
 {
+	None,
 	Moving,
 	InBattle,
+	Finish,
 }
 
 public enum ActionState
@@ -73,6 +75,8 @@ public class CharacterAnimationState
 	public const string DEAD = "Dead";
 
 	public const string DRAGGING = "Dragging";
+
+	public const string SKILL = "Skill";
 }
 
 public class CommonAnimationState
@@ -82,7 +86,6 @@ public class CommonAnimationState
 	public const string DAMAGE_TEXT_LEFT_CRITICAL = "PopLeftCritical";
 	public const string DAMAGE_TEXT_RIGHT_CRITICAL = "PopRightCritical";
 	public const string EFFECT_ATTACK_MOVE = "Moving";
-
 	public const string EFFECT_ATTACK_HIT = "Hit";
 }
 
@@ -91,6 +94,8 @@ public class EffectNameConst
 	public const string SKILL_LIGHTNING = "ef_Lightning";
 	public const string SKILL_EXPLOSION = "ef_Explosion";
 	public const string SKILL_WIND = "ef_Wind";
+	public const string SKILL_LASER = "ef_Laser";
+	public const string SKILL_BOMB = "ef_Bomb";
 }
 
 public enum AttackType
@@ -105,6 +110,8 @@ public enum SkillType
 	Lightning,
 	Explosion,
 	Wind,
+	Laser,
+	Bomb,
 }
 
 

@@ -4,15 +4,26 @@ using System.Collections;
 
 public class SkillController : MonoBehaviour 
 {
+	public float skillFinishTime;
 	public float effectDuration;
 	public int needSkillPoint;
+
+	public Vector2 effectPositionOffset;
 
 	public SkillType skillType;
 
 	Action finishedCallback = null;
 
-	float skillFinishTime;
 	GameObject cachedEffect;
+
+	public float ElapsedTime 
+	{
+		get 
+		{
+			return elapsedTime;
+		}
+	}
+
 	float elapsedTime = 0;
 	public bool invokedSkill = false;
 
@@ -36,19 +47,24 @@ public class SkillController : MonoBehaviour
 		case SkillType.Wind:
 			name = EffectNameConst.SKILL_WIND;
 			break;
+		case SkillType.Laser:
+			name = EffectNameConst.SKILL_LASER;
+			break;
+		case SkillType.Bomb:
+			name = EffectNameConst.SKILL_BOMB;
+			break;
 		}
 
 		cachedEffect = Resources.Load<GameObject>("Effect/Skill/"+name);
 	}
 
-	public void InvokeSkill(float finishTime,Action callback = null)
+	public void InvokeSkill(Action callback = null,bool addChild = false)
 	{
 		elapsedTime = 0f;
-		skillFinishTime = finishTime;
 		finishedCallback = callback;
 		invokedSkill = true;
 
-		InstaniateEffect(cachedEffect,this.transform);
+		InstaniateEffect(cachedEffect,this.transform,addChild);
 	}
 		
 	public string GetSkillSeName()
@@ -65,6 +81,12 @@ public class SkillController : MonoBehaviour
 			break;
 		case SkillType.Wind :
 			seName = SoundConst.SE_SKILL_WIND;
+			break;
+		case SkillType.Laser :
+			seName = SoundConst.SE_LASER_LONG;
+			break;
+		case SkillType.Bomb:
+			seName = SoundConst.SE_SKILL_BOMB;
 			break;
 		}
 
@@ -97,19 +119,30 @@ public class SkillController : MonoBehaviour
 		elapsedTime += Time.deltaTime;
 	}
 
-	public void ForcedFinishSkill()
+	public bool IsAliveEffect()
 	{
-
-		if(finishedCallback != null)
-		{
-			finishedCallback ();
-			Reset();
-		}
+		return (elapsedTime <= effectDuration);
 	}
 
-	GameObject InstaniateEffect(GameObject obj,Transform _target)
+	public void ForcedFinishSkill()
 	{
-		return Instantiate(obj,
-			new Vector3(_target.position.x,_target.position.y,-2f),_target.rotation) as GameObject;
+		Reset();
+	}
+
+
+	GameObject InstaniateEffect(GameObject obj,Transform _target,bool addChild)
+	{
+		GameObject go = Instantiate(obj,
+			new Vector3(_target.position.x,_target.position.y,-5f),_target.rotation) as GameObject;
+
+
+		if(addChild)
+		{
+			go.transform.SetParent(_target);
+			go.transform.localPosition = new Vector3(effectPositionOffset.x,effectPositionOffset.y,-5f);
+			go.GetComponent<DestroyGameObject>().destroyDelay = effectDuration;
+		}
+
+		return go;
 	}
 }

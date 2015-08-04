@@ -10,4 +10,5 @@ public class CharacterParameterModel
 	public int maxSp { get; set; }
 	public float attackRange { get; set; }
 	public float attackInterval { get; set; }
+	public float bodyRadius { get; set; }
 }

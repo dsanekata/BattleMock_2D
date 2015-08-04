@@ -7,10 +7,12 @@ public class CharacterMove : MonoBehaviour
 	float characterScale = 0;
 
 	Transform modelTrans = null;
+	Transform hud = null;
 
 	void Start()
 	{
 		modelTrans = this.transform.FindChild("Model");
+		hud = this.transform.FindChild("HUD");
 		characterScale = modelTrans.localScale.x;
 	}
 
@@ -36,12 +38,16 @@ public class CharacterMove : MonoBehaviour
 
 		if(dist < 0)
 		{
-			modelTrans.localScale = new Vector3(-characterScale,characterScale,characterScale);
+			//modelTrans.localScale = new Vector3(-characterScale,characterScale,characterScale);
+			transform.eulerAngles = new Vector3(0,180,0);
 		}
 		else
 		{
-			modelTrans.localScale = new Vector3(characterScale,characterScale,characterScale);
+			//modelTrans.localScale = new Vector3(characterScale,characterScale,characterScale);
+			transform.eulerAngles = new Vector3(0,0,0);
 		}
+
+		hud.eulerAngles = Vector3.zero;
 	}
 
 	float ClampPosition(float posY)
@@ -53,13 +59,16 @@ public class CharacterMove : MonoBehaviour
 	{
 		if(this.transform.position.x - prevPosx > 0)
 		{
-			modelTrans.localScale = new Vector3(characterScale,characterScale,characterScale);
+			//modelTrans.localScale = new Vector3(characterScale,characterScale,characterScale);
+			transform.eulerAngles = new Vector3(0,0,0);
 		}
 		else
 		{
-			modelTrans.localScale = new Vector3(-characterScale,characterScale,characterScale);
+			//modelTrans.localScale = new Vector3(-characterScale,characterScale,characterScale);
+			transform.eulerAngles = new Vector3(0,180,0);
 		}
 
+		hud.eulerAngles = Vector3.zero;
 		prevPosx = this.transform.position.x;
 	}
 }

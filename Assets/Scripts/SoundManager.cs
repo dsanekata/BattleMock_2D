@@ -39,12 +39,22 @@ public class SoundManager : MonoBehaviour
 		controller.PlaySE(name,isLoop);
 	}
 
+	public void StopBGM()
+	{
+		controller.StopBGM();
+	}
+
 	void LateUpdate()
 	{
 		if(controller != null)
 		{
 			controller.OnLateUpdate();
 		}
+	}
+
+	void OnDestroy()
+	{
+		instance = null;
 	}
 
 }

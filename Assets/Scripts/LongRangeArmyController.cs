@@ -12,6 +12,13 @@ public class LongRangeArmyController : ArmyBaseController
 		slash.Init ();
 	}
 
+	protected override void AttackOnUpdate ()
+	{
+		base.AttackOnUpdate();
+
+		slash.UpdateEffect();
+	}
+
 	protected override void AttackStart ()
 	{
 		canAttack = false;
@@ -27,5 +34,10 @@ public class LongRangeArmyController : ArmyBaseController
 	protected override void AttackEnd ()
 	{
 		Invoke ("NextAttack", this.characterParam.attackInterval);
+	}
+
+	protected override void AttackOnExit ()
+	{
+		slash.Reset();
 	}
 }

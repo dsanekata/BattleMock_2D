@@ -26,6 +26,7 @@ public class Entity_Army : ScriptableObject
 		public int maxSp;
 		public float attackRange;
 		public float attackInterval;
+		public float bodyRadius;
 	}
 }
 

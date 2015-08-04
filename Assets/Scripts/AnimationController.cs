@@ -133,6 +133,23 @@ public class AnimationController
 	}
 	#endregion
 
+	#region Skill
+
+	public virtual void Skill(Action onBegin,Action onEnd)
+	{
+		if(IsSkilling()) return;
+
+		stateManager.RegisterSkillCallbacks(onBegin,onEnd);
+		DoAction(CharacterAnimationState.SKILL);
+	}
+
+	public bool IsSkilling()
+	{
+		return (IsPlaying(CharacterAnimationState.SKILL));
+	}
+
+	#endregion
+
 	public void EnaleAnimator()
 	{
 		animator.speed = 1f;;

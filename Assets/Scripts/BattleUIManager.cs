@@ -22,6 +22,7 @@ public class BattleUIManager : MonoBehaviour
 	Text dragLimitText = null;
 
 	Toggle autoSkillToggle = null;
+	CanvasGroup alertCanvas = null;
 
 	public bool autoInvokeSkill = true;
 
@@ -35,6 +36,7 @@ public class BattleUIManager : MonoBehaviour
 		dragCountText = transform.FindChild("Offset/Top/Drag/CountText").GetComponent<Text>();
 		dragLimitText = transform.FindChild("Offset/Top/Drag/LimitText/Value").GetComponent<Text>();
 		autoSkillToggle = transform.FindChild("Offset/Top/AutoSkill/Toggle").GetComponent<Toggle>();
+		alertCanvas = transform.FindChild("Offset/AlertCanvas").GetComponent<CanvasGroup>();
 		autoSkillToggle.onValueChanged.AddListener(SetAutoSkill);
 	}
 
@@ -63,6 +65,11 @@ public class BattleUIManager : MonoBehaviour
 	public void StartSkillCutIn(float waitTime,System.Action callback)
 	{
 		StartCoroutine (SkillCutIn (waitTime, callback));
+	}
+
+	public void StartAlert(System.Action callback)
+	{
+		StartCoroutine(Alert(callback));
 	}
 
 	IEnumerator SkillCutIn(float waitTime, System.Action callBack = null)
@@ -100,5 +107,32 @@ public class BattleUIManager : MonoBehaviour
 
 		if(callBack != null)
 			callBack();
+	}
+
+	IEnumerator Alert(System.Action callback)
+	{
+		SoundManager.GetInstance().StopBGM();
+		SoundManager.GetInstance().PlaySE(SoundConst.SE_ALERT);
+
+		alertCanvas.alpha = 0f;
+
+		float time = 0f;
+		float duration = 3f;
+		while(time < duration)
+		{
+			alertCanvas.alpha = Mathf.PingPong(time,0.5f);
+			time += Time.deltaTime;
+
+			yield return null;
+		}
+
+		alertCanvas.alpha = 0;
+
+		callback();
+	}
+
+	void OnDestroy()
+	{
+		instance = null;
 	}
 }

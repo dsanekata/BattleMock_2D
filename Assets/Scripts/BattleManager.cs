@@ -28,13 +28,31 @@ public class BattleManager : MonoBehaviour
 
 	public List<ArmyBaseController> armiesList = new List<ArmyBaseController>();
 	public List<EnemyBaseController> enemiesList = new List<EnemyBaseController>();
-	public BattleState battleState;
 
+	public BattleState BattleState 
+	{
+		get
+		{
+			return battleState;
+		}
+		set
+		{
+			prevBattleState = battleState;
+			battleState = value;
+		}
+	}
+
+	BattleState battleState;
+
+	BattleState prevBattleState;
 	GameObject enemySrc = null;
+	ArmyBaseController hideArmy;
+	CharacterParameterModel hideParam;
 
 	public int currentWaveId = 0;
 	int dragCount = BattleConst.DRAG_LIMIT;
 	bool canUpdate = true;
+	bool showed = false;
 
 	void Awake()
 	{
@@ -44,24 +62,31 @@ public class BattleManager : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-		if(!canUpdate)
+		if(Input.GetKeyDown(KeyCode.S))
+		{
+			ShowHidingArmy();
+		}
+
+		if(BattleState == BattleState.Finish || !canUpdate)
 		{
 			return;
 		}
-
+			
 		UpdateCharacters();
 	}
 
 	void LateUpdate()
 	{
-		if(!canUpdate)
+		if(!canUpdate || BattleState == BattleState.Finish)
 		{
 			return;
 		}
 
+		followCamera.UpdateCameraPosition();
+
 		CheckRemainArmy();
 		CheckRemainEnemy();
-		followCamera.UpdateCameraPosition();
+
 		CheckBattleState();
 	}
 
@@ -103,13 +128,16 @@ public class BattleManager : MonoBehaviour
 	void CheckBattleState()
 	{
 
-		if(followCamera.IsEnemyInsideCamera(enemiesList.Where(x => x.waveId == currentWaveId).ToArray()))
+		if(BattleState != BattleState.Finish)
 		{
-			battleState = BattleState.InBattle;
-		}
-		else
-		{
-			battleState = BattleState.Moving;
+			if(followCamera.IsEnemyInsideCamera(enemiesList.Where(x => x.waveId == currentWaveId).ToArray()))
+			{
+				BattleState = BattleState.InBattle;
+			}
+			else
+			{
+				BattleState = BattleState.Moving;
+			}
 		}
 	}
 
@@ -125,7 +153,7 @@ public class BattleManager : MonoBehaviour
 
 		foreach(var enemy in enemiesList)
 		{
-			enemy.Initialize(modelList[index]);
+			enemy.Initialize(modelList[enemy.enemyId - 1]);
 			enemy.gameObject.SetActive(false);
 			index++;
 
@@ -150,6 +178,12 @@ public class BattleManager : MonoBehaviour
 		}
 			
 		armiesList = newList;
+
+		if(armiesList.Count == 0 && BattleState != BattleState.Finish) 
+		{
+			BattleState = BattleState.Finish;
+			SceneManager.GetInstance().LoadScene("BattlePlay");
+		}
 	}
 
 	void CheckRemainEnemy()
@@ -166,23 +200,41 @@ public class BattleManager : MonoBehaviour
 						
 		if(newList.Where(x => x.waveId == currentWaveId).ToArray().Length == 0)
 		{
-			ActivateEnemies();
+			if(!ActivateEnemies() && BattleState != BattleState.Finish)
+			{
+				BattleState = BattleState.Finish;
+				SceneManager.GetInstance().LoadScene("BattlePlay");
+			}
 		}
 
 		enemiesList = newList;
 	}
 
-	void ActivateEnemies()
+	bool ActivateEnemies()
 	{
 		currentWaveId ++;
+		bool remainEnemies = false;
+		bool changed = false;
 
 		for(int i = 0; i < enemiesList.Count; i++)
 		{
 			if(enemiesList[i].waveId == currentWaveId)
 			{
+				if(!changed && enemiesList[i].isBoss)
+				{
+					BattleUIManager.GetInstance().StartAlert(ChangeToBossWave);
+				}
 				enemiesList[i].gameObject.SetActive(true);
+				remainEnemies = true;
 			}
 		}
+
+		return remainEnemies;
+	}
+
+	void ChangeToBossWave()
+	{
+		SoundManager.GetInstance().PlayBGM(SoundConst.BGM_BOSS);
 	}
 
 	void ConfigureArmies(CharacterParameterModel[] modelList)
@@ -197,6 +249,15 @@ public class BattleManager : MonoBehaviour
 			cachedObj = Resources.Load<GameObject>((new StringBuilder("Army/Army_").Append(modelList[i].id.ToString())).ToString());
 			ArmyBaseController army = Instantiate(cachedObj).GetComponent<ArmyBaseController>();
 			army.transform.SetParent(armiesParent);
+
+			if(modelList[i].id == 5)
+			{
+				hideArmy = army;
+				hideParam = modelList[i];
+				army.gameObject.SetActive(false);
+				continue;
+			}
+
 			Vector3 startPos = this.transform.root.FindChild ("StartPoints").FindChild("StartPoint_"+(i+1).ToString()).position;
 			army.transform.position = startPos;
 			army.Initialize(modelList[i]);
@@ -328,6 +389,23 @@ public class BattleManager : MonoBehaviour
 		yield return new WaitForEndOfFrame();
 
 		callback();
+	}
+
+	void ShowHidingArmy()
+	{
+		if(!showed)
+		{
+			hideArmy.Initialize(hideParam);
+			hideArmy.SetHUDHandle(uiCanvas.FindChild("Offset/Bottom/Armies").GetChild(3).GetComponent<CharacterHUDHandle>());
+			hideArmy.Show();
+			this.armiesList.Add(hideArmy);
+			showed = false;
+		}
+	}
+		
+	void OnDestroy()
+	{
+		instance = null;
 	}
 }
 

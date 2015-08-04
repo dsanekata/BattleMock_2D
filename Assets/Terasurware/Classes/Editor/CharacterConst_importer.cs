@@ -53,6 +53,7 @@ public class CharacterConst_importer : AssetPostprocessor {
 					cell = row.GetCell(6); p.maxSp = (int)(cell == null ? 0 : cell.NumericCellValue);
 					cell = row.GetCell(7); p.attackRange = (float)(cell == null ? 0 : cell.NumericCellValue);
 					cell = row.GetCell(8); p.attackInterval = (float)(cell == null ? 0 : cell.NumericCellValue);
+					cell = row.GetCell(9); p.bodyRadius = (float)(cell == null ? 0 : cell.NumericCellValue);
 						s.list.Add (p);
 					}
 					data.sheets.Add(s);

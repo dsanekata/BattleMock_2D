@@ -30,6 +30,12 @@ public class BaseController : MonoBehaviour
 
 	public bool canDrag = false;
 
+	public float BodyRadius
+	{
+		get{ return characterParam.bodyRadius; }
+	}
+
+
 	protected int skillDamage;
 
 	public virtual void Initialize(CharacterParameterModel model)
@@ -56,6 +62,7 @@ public class BaseController : MonoBehaviour
 		this.characterParam.maxSp = model.maxSp;
 		this.characterParam.attackRange = model.attackRange;
 		this.characterParam.attackInterval = model.attackInterval;
+		this.characterParam.bodyRadius = model.bodyRadius;
 		this.characterParam.hp = this.characterParam.maxHp;
 		skillDamage = characterParam.attack * 5;
 	}
@@ -135,6 +142,8 @@ public class BaseController : MonoBehaviour
 	protected virtual void IdleOnEnter()
 	{
 		this.prevActionState = this.actionState;
+		canMove = true;
+		canAttack = true;
 		this.animationController.Idle();
 	}
 
@@ -191,6 +200,8 @@ public class BaseController : MonoBehaviour
 			canAttack = true;
 			ChangeState(ActionState.Attack);
 		}
+
+		FindTarget();
 	}
 
 	protected virtual void MoveOnExit()
@@ -330,6 +341,9 @@ public class BaseController : MonoBehaviour
 	protected virtual void SkillOnExit()
 	{
 		skillController.ForcedFinishSkill();
+		canAttack = true;
+		canMove = true;
+		canDrag = true;
 	}
 
 	protected virtual void SkillOnUpdate()
@@ -412,7 +426,10 @@ public class BaseController : MonoBehaviour
 
 	protected bool CheckAttackDistance(Vector2 targetPos)
 	{
-		return (this.characterParam.attackRange >= Vector2.Distance(this.transform.position,targetPos));
+		float distance = BodyRadius + target.BodyRadius;
+		distance += this.characterParam.attackRange;
+
+		return (distance >= Vector2.Distance(this.transform.position,targetPos));
 	}
 
 	#endregion
@@ -511,7 +528,7 @@ public class BaseController : MonoBehaviour
 
 		Vector3 viewportPos = Camera.main.WorldToViewportPoint(transform.position);
 
-		if(viewportPos.x <= 1 || viewportPos.x >= 0)
+		if(viewportPos.x <= 1 && viewportPos.x >= 0)
 		{
 			inSide = true;
 		}
@@ -540,4 +557,5 @@ public class CharacterParameter
 	public float attackRange;
 	public float attackInterval;
 	public int sp;
+	public float bodyRadius;
 }

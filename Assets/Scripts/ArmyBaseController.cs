@@ -4,7 +4,6 @@ using System.Linq;
 
 public class ArmyBaseController : BaseController 
 {
-	public float skillFinishTime;
 	CharacterHUDHandle hudHandle = null;
 
 	public override void Initialize (CharacterParameterModel model)
@@ -21,9 +20,8 @@ public class ArmyBaseController : BaseController
 
 	public override void UpdateAction ()
 	{
-		Debug.Log(actionState);
 
-		if(!isInitialized || isDead)
+		if(!isInitialized || isDead || !gameObject.activeSelf)
 		{
 			return;
 		}
@@ -68,21 +66,21 @@ public class ArmyBaseController : BaseController
 		
 	protected override void AttackOnUpdate ()
 	{
-		if(target.isDead)
+		if(!canAttack && BattleManager.GetInstance().BattleState == BattleState.InBattle)
+		{
+			return;
+		}
+
+		if(target.isDead || BattleManager.GetInstance().BattleState != BattleState.InBattle)
 		{
 			target = null;
 			ChangeState(ActionState.Idle);
 			return;
 		}
-
-		if(!canAttack)
-		{
-			return;
-		}
-
+			
 		if(!CheckAttackDistance (target.transform.position))
 		{
-			ChangeState (ActionState.Idle);
+			ChangeState (ActionState.Move);
 			return;
 		}
 
@@ -110,7 +108,7 @@ public class ArmyBaseController : BaseController
 	{
 		BattleManager.GetInstance ().PlayBattle();
 		SoundManager.GetInstance().PlaySE(skillController.GetSkillSeName());
-		skillController.InvokeSkill (skillFinishTime,SkillFinish);
+		skillController.InvokeSkill (SkillFinish);
 		ModifySp(-skillController.needSkillPoint);
 		canDrag = false;
 	}
@@ -204,8 +202,8 @@ public class ArmyBaseController : BaseController
 
 	protected void InvokeSkill()
 	{
-		Debug.Log(skillController.invokedSkill);
-		if(BattleManager.GetInstance().battleState != BattleState.InBattle || skillController.invokedSkill)
+		if(BattleManager.GetInstance().BattleState != BattleState.InBattle || 
+			skillController.invokedSkill)
 		{
 			return;
 		}
@@ -214,6 +212,13 @@ public class ArmyBaseController : BaseController
 		BattleManager.GetInstance ().StopBattle();
 		BattleUIManager.GetInstance ().StartSkillCutIn (1, SkillStart);
 		ChangeState(ActionState.Skill);
+	}
+
+	public void Show()
+	{
+		this.gameObject.SetActive(true);
+		this.transform.position = Camera.main.ViewportToWorldPoint(new Vector3(0.4f,0.4f,0f));
+		animationController.SetAnimator(transform.FindChild("Model").GetComponent<Animator>());
 	}
 
 

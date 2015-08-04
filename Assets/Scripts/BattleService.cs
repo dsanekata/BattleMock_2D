@@ -43,6 +43,7 @@ public class BattleService
 			paramModel.maxSp = model.maxSp;
 			paramModel.attackRange = model.attackRange;
 			paramModel.attackInterval = model.attackInterval;
+			paramModel.bodyRadius = model.bodyRadius;
 
 			modelList.Add(paramModel);
 
@@ -77,6 +78,7 @@ public class BattleService
 		{
 			CharacterParameterModel paramModel = new CharacterParameterModel ();
 
+			paramModel.id = model.id;
 			paramModel.maxHp = model.maxHp;
 			paramModel.attack = model.attack;
 			paramModel.defence = model.defence;
@@ -85,6 +87,7 @@ public class BattleService
 			paramModel.maxSp = model.maxSp;
 			paramModel.attackRange = model.attackRange;
 			paramModel.attackInterval = model.attackInterval;
+			paramModel.bodyRadius = model.bodyRadius;
 
 			modelList [index] = paramModel;
 			index++;

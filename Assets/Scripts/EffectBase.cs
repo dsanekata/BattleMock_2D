@@ -23,5 +23,15 @@ public class EffectBase : MonoBehaviour
 		attackEffectAnim.gameObject.SetActive (true);
 		attackEffectAnim.Play (CommonAnimationState.EFFECT_ATTACK_HIT);
 	}
+
+	public virtual void UpdateEffect()
+	{
+		
+	}
+
+	public virtual void Reset()
+	{
+		attackEffectAnim.gameObject.SetActive(false);
+	}
 		
 }
